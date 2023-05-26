@@ -5,6 +5,7 @@ import os
 import copy
 
 from typing import List, Optional
+from pycrawl.solver import get_relevant_files
 
 
 @enum.unique
@@ -13,6 +14,9 @@ class ReturnCode(enum.IntEnum):
 
     OK = 0
     """Successful execution with expected ending."""
+
+    RETRIEVAL_FAILED = 1
+    """No relevant documents could be found."""
 
 
 logging.basicConfig(
@@ -29,7 +33,14 @@ def main(argv: Optional[List[str]]) -> int:
     args: argparse.Namespace = parser.parse_args(argv)
     args: argparse.Namespace = replace_args(args)
     logger.debug(args)
-    # TODO logic
+    logger.info("Retrieve relevant files...")
+    relevant_files: List[str] = get_relevant_files(args)
+
+    if relevant_files is None or relevant_files == []:
+        return ReturnCode.RETRIEVAL_FAILED
+
+    for i, relevant_file in enumerate(relevant_files):
+        logger.info(f"[{i}] {relevant_file}")
     return ReturnCode.OK
 
 

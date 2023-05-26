@@ -14,7 +14,7 @@ class ParserInterface(ABC):
         """
 
     @abstractmethod
-    def is_valid(self, file_path: str) -> str:
+    def is_valid(self, file_path: str) -> bool:
         """The method checks if the file type matches.
 
         Args:

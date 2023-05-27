@@ -63,8 +63,8 @@ logger: logging.Logger = logging.getLogger(__name__)
 def main(argv: Optional[List[str]]) -> int:
     logger.info("Parse arguments...")
     argv: List[str] = strip_argv(argv)
-    parser: argparse.ArgumentParser = get_parser()
-    args: argparse.Namespace = parser.parse_args(argv)
+    args: argparse.Namespace = get_args(argv)  #
+
     logger.debug(args)
 
     logger.info("Setup...")
@@ -117,7 +117,7 @@ def setup_args(args: argparse.Namespace) -> Optional[dict]:
     return args_dict
 
 
-def get_parser() -> argparse.ArgumentParser:
+def get_args(argv: List[str]) -> argparse.Namespace:
     parser: argparse.ArgumentParser = argparse.ArgumentParser(
         prog="Pycrawl",
         description="The Python command line application Pycrawl enables targeted search for relevant documents based on modern techniques and specified predicates.",
@@ -128,14 +128,6 @@ def get_parser() -> argparse.ArgumentParser:
         nargs="+",
         required=True,
         help="Set directory path(s).",
-    )
-    parser.add_argument(
-        "-m",
-        "--method",
-        default="eq",
-        type=str,
-        choices=["eq", "re"],
-        help="Set information extraction technique.",
     )
     parser.add_argument(
         "-t",
@@ -152,4 +144,19 @@ def get_parser() -> argparse.ArgumentParser:
         type=int,
         help="Set limit for output.",
     )
-    return parser
+    parser.add_argument(
+        "-m",
+        "--method",
+        default="eq",
+        type=str,
+        choices=["eq", "re"],
+        help="Set information extraction technique.",
+    )
+    args: argparse.Namespace = parser.parse_args(argv)
+    # eq and re require a follow-up query argument
+    if args.method in ["eq", "re"]:
+        parser.add_argument(
+            "query", type=str, required=True, help="Query string or regular expression."
+        )
+    args: argparse.Namespace = parser.parse_args(argv)
+    return args

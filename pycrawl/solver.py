@@ -4,7 +4,7 @@ import textract
 from typing import List, Tuple
 
 from pycrawl.logic.matcher.regex_pattern import RegexPattern
-from pycrawl.logic.matcher.string_equality_match import StringEqualityMatch
+from pycrawl.logic.matcher.string_equality import StringEquality
 
 
 def get_relevant_files(args: dict) -> List[Tuple[float, str]]:
@@ -24,9 +24,7 @@ def get_relevant_files(args: dict) -> List[Tuple[float, str]]:
             # get matches
             matches: int = 0
             if "eq_match" in args:
-                matches = StringEqualityMatch.get_matches(
-                    text=text, match=args["eq_match"]
-                )
+                matches = StringEquality.get_matches(text=text, match=args["eq_match"])
             elif "re_pattern" in args:
                 matches = RegexPattern.get_matches(
                     text=text, pattern=args["re_pattern"]

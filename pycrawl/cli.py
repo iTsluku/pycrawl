@@ -22,6 +22,37 @@ class ReturnCode(enum.IntEnum):
     """No relevant documents could be found."""
 
 
+# https://textract.readthedocs.io/en/stable/
+ALLOWED_FILE_TYPES = [
+    ".csc",
+    ".doc",
+    ".docx",
+    ".eml",
+    ".epub",
+    ".gif",
+    ".jpg",
+    ".jpeg",
+    ".json",
+    ".html",
+    ".htm",
+    ".mp3",
+    ".msg",
+    ".odt",
+    ".ogg",
+    ".pdf",
+    ".png",
+    ".pptx",
+    ".ps",
+    ".rtf",
+    ".tiff",
+    ".tif",
+    ".txt",
+    ".wav",
+    ".xlsx",
+    ".xls",
+]
+
+
 logging.basicConfig(
     format="%(asctime)s [%(levelname)s] (%(name)s:%(funcName)s:%(lineno)d): %(message)s",
     level=logging.DEBUG,
@@ -96,23 +127,23 @@ def get_parser() -> argparse.ArgumentParser:
         "--paths",
         nargs="+",
         required=True,
-        help="Set directory paths.",
+        help="Set directory path(s).",
     )
     parser.add_argument(
         "-m",
-        "--matcher",
+        "--method",
         default="eq",
         type=str,
         choices=["eq", "re"],
-        help="Set matcher technique.",
+        help="Set information extraction technique.",
     )
     parser.add_argument(
         "-t",
         "--types",
-        nargs="+",
-        default=[".pdf"],
-        choices=[".txt", ".pdf"],
-        help="Set file types.",
+        nargs="*",
+        default=ALLOWED_FILE_TYPES,
+        choices=ALLOWED_FILE_TYPES,
+        help="Set allowed file type(s).",
     )
     parser.add_argument(
         "-l",

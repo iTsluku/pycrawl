@@ -63,7 +63,8 @@ logger: logging.Logger = logging.getLogger(__name__)
 def main(argv: Optional[List[str]]) -> int:
     logger.info("Parse arguments...")
     argv: List[str] = strip_argv(argv)
-    args: argparse.Namespace = get_args(argv)  #
+    parser: argparse.ArgumentParser = get_parser()
+    args: argparse.Namespace = parser.parse_args(argv)
 
     logger.debug(args)
 
@@ -73,12 +74,12 @@ def main(argv: Optional[List[str]]) -> int:
         return ReturnCode.SETUP_FAILED
 
     logger.info("Retrieve relevant files...")
-    relevant_files: List[str] = get_relevant_files(args_dict)
+    relevant_files: List[(float, str)] = get_relevant_files(args_dict)
     if relevant_files is None:
         return ReturnCode.RETRIEVAL_FAILED
 
-    for i, relevant_file in enumerate(relevant_files):
-        logger.info(f"[{i}] {relevant_file}")
+    for i, (score, relevant_file) in enumerate(relevant_files):
+        logger.info(f"index=[{i}] score=[{score}] path=[{relevant_file}]")
     return ReturnCode.OK
 
 
@@ -99,7 +100,11 @@ def setup_args(args: argparse.Namespace) -> Optional[dict]:
     # check assumptions
     if args_dict is None:
         return None
-    if not all(k in args_dict for k in ("paths", "matcher", "types", "limit")):
+    if not all(k in args_dict for k in ("paths", "types", "limit")):
+        return None
+    # one method is required
+    if not any(k in args_dict for k in ("eq_match", "re_pattern")):
+        logger.critical(f"No query provided.")
         return None
     # replace "." path input with current working directory
     if args_dict["paths"] == ["."]:
@@ -112,30 +117,32 @@ def setup_args(args: argparse.Namespace) -> Optional[dict]:
         else:
             directory_paths.append(directory_path)
     if not directory_paths:
-        logger.critical(f"No existing directory parsed.")
+        logger.critical(f"No valid directory.")
         return None
     return args_dict
 
 
-def get_args(argv: List[str]) -> argparse.Namespace:
+def get_parser() -> argparse.ArgumentParser:
     parser: argparse.ArgumentParser = argparse.ArgumentParser(
         prog="Pycrawl",
         description="The Python command line application Pycrawl enables targeted search for relevant documents based on modern techniques and specified predicates.",
     )
     parser.add_argument(
         "-p",
-        "--paths",
+        "--path",
         nargs="+",
         required=True,
         help="Set directory path(s).",
+        dest="paths",
     )
     parser.add_argument(
         "-t",
-        "--types",
+        "--type",
         nargs="*",
         default=ALLOWED_FILE_TYPES,
         choices=ALLOWED_FILE_TYPES,
         help="Set allowed file type(s).",
+        dest="types",
     )
     parser.add_argument(
         "-l",
@@ -143,20 +150,14 @@ def get_args(argv: List[str]) -> argparse.Namespace:
         default="10",
         type=int,
         help="Set limit for output.",
+        dest="limit",
     )
-    parser.add_argument(
-        "-m",
-        "--method",
-        default="eq",
-        type=str,
-        choices=["eq", "re"],
-        help="Set information extraction technique.",
+    # Create a mutually exclusive method group
+    method_group = parser.add_mutually_exclusive_group(required=True)
+    method_group.add_argument(
+        "-eq", "--equality", type=str, help="String equality method.", dest="eq_match"
     )
-    args: argparse.Namespace = parser.parse_args(argv)
-    # eq and re require a follow-up query argument
-    if args.method in ["eq", "re"]:
-        parser.add_argument(
-            "query", type=str, required=True, help="Query string or regular expression."
-        )
-    args: argparse.Namespace = parser.parse_args(argv)
-    return args
+    method_group.add_argument(
+        "-re", "--regex", type=str, help="Regular expression method.", dest="re_pattern"
+    )
+    return parser

@@ -2,8 +2,9 @@ from abc import ABC, abstractmethod
 
 
 class MatcherInterface(ABC):
+    @staticmethod
     @abstractmethod
-    def get_matches(self, text: str, query: str) -> int:
+    def get_matches(text: str, query: str) -> int:
         """Calculate the number of matches.
 
          Args:
